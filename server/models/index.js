@@ -1,0 +1,10 @@
+const m = require("mongoose"), S = m.Schema;
+const ref = (r, x = {}) => ({ type: S.Types.ObjectId, ref: r, ...x });
+const mk = (n, d) => m.models[n] || m.model(n, new S(d, { timestamps: true }));
+exports.User = mk("User", { name: { type: String, required: true, trim: true }, email: { type: String, required: true, unique: true, lowercase: true }, password: { type: String, required: true, minlength: 6 }, role: { type: String, enum: ["customer", "provider", "admin"], default: "customer" }, phone: String, city: String });
+exports.Category = mk("Category", { icon: String, name: { type: String, required: true, unique: true, trim: true }, description: String });
+exports.Provider = mk("Provider", { user: ref("User", { required: true, unique: true }), category: ref("Category", { required: true }), bio: String, photo: String, headline: String, experienceYears: { type: Number, default: 0 }, hourlyRate: { type: Number, required: true }, city: String, averageRating: { type: Number, default: 0 }, numReviews: { type: Number, default: 0 }, isAvailable: { type: Boolean, default: true } });
+exports.Booking = mk("Booking", { customer: ref("User", { required: true }), provider: ref("Provider", { required: true }), description: { type: String, required: true }, address: { type: String, required: true }, scheduledDate: { type: Date, required: true }, status: { type: String, enum: ["pending", "accepted", "rejected", "in-progress", "completed", "cancelled"], default: "pending" } });
+exports.Review = mk("Review", { booking: ref("Booking", { required: true, unique: true }), customer: ref("User", { required: true }), provider: ref("Provider", { required: true }), rating: { type: Number, min: 1, max: 5, required: true }, comment: String });
+exports.Notification = mk("Notification", { user: ref("User", { required: true }), message: { type: String, required: true }, isRead: { type: Boolean, default: false } });
+exports.notify = (user, message) => exports.Notification.create({ user, message });
